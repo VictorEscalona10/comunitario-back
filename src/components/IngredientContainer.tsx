@@ -1,5 +1,7 @@
-import { useState } from "react";
 import axios from "axios";
+import { API_URL } from "../api/api";
+import { useState } from "react";
+
 import toast from "react-hot-toast";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -37,7 +39,7 @@ const IngredientContainer = ({ id, name, unit_of_measure, onUpdate, stock, minSt
     setIsLoading(true);
     try {
       const endpoint = confirmation.type === "add" ? "addStock" : "restaStock";
-      await axios.patch(`http://localhost:3000/ingredients/${endpoint}`, null, {
+      await axios.patch(`${API_URL}/ingredients/${endpoint}`, null, {
         params: { ingredientId: id, amount },
       });
       toast.success(confirmation.type === "add" ? "Stock agregado" : "Stock descontado");
@@ -55,7 +57,7 @@ const IngredientContainer = ({ id, name, unit_of_measure, onUpdate, stock, minSt
   const handleDelete = async () => {
     setIsLoading(true);
     try {
-      await axios.delete(`http://localhost:3000/ingredients/delete/${name}`);
+      await axios.delete(`${API_URL}/ingredients/delete/${name}`);
       toast.success("Ingrediente eliminado");
       if (onUpdate) onUpdate();
     } catch (error) {

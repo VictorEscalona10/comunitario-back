@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../api/api';
 import toast from 'react-hot-toast';
+
 
 interface Ingredient {
   id: string;
@@ -40,9 +42,9 @@ const Profile = () => {
     try {
       setIsLoading(true);
       const [ingRes, recRes, movRes] = await Promise.all([
-        axios.get('http://localhost:3000/ingredients/getAll').catch(() => ({ data: [] })),
-        axios.get('http://localhost:3000/recipes').catch(() => ({ data: [] })),
-        axios.get('http://localhost:3000/ingredients/movements').catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/ingredients/getAll`).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/recipes`).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/ingredients/movements`).catch(() => ({ data: [] })),
       ]);
       setIngredients(ingRes.data || []);
       setRecipes(recRes.data || []);

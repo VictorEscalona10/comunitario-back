@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { API_URL } from "../api/api";
 import toast from "react-hot-toast";
 
 interface AddIngredientModalProps {
@@ -33,12 +34,13 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
     }
 
     try {
-      await axios.post("http://localhost:3000/ingredients/create", {
+      await axios.post(`${API_URL}/ingredients/create`, {
         name: ingredientName.trim(),
         unit_of_measure: unitOfMeasure,
         minStock: minStockNum,
         currentStock: currentStockNum,
       }, { headers: { 'Content-Type': 'application/json' } });
+
 
       toast.success("¡Ingrediente creado con éxito!");
       handleClose();

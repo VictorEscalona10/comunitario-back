@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../api/api';
 import { toast } from 'react-hot-toast';
 
 interface IngredientItem {
@@ -23,9 +24,8 @@ interface RecipeCardProps {
   onRefresh?: () => void;
 }
 
-const API_URL = 'http://localhost:3000';
-
 const RecipeContainer: React.FC<RecipeCardProps> = ({ recipe }) => {
+
   const [quantity, setQuantity] = useState<string>('');
   const [loading, setLoading] = useState(false);
 

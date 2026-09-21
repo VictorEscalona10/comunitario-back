@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../api/api';
 import toast from 'react-hot-toast';
+
 
 interface Ingredient {
   id: string;
@@ -36,7 +38,7 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
 
   const loadIngredients = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/ingredients/getAll');
+      const response = await axios.get(`${API_URL}/ingredients/getAll`);
       setIngredients(response.data);
     } catch (error) {
       toast.error('Error al cargar ingredientes');
@@ -89,7 +91,7 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
 
     setIsLoading(true);
     try {
-      await axios.post('http://localhost:3000/recipes', {
+      await axios.post(`${API_URL}/recipes`, {
         name: recipeName,
         description,
         ingredients: selectedIngredients.map(ing => ({

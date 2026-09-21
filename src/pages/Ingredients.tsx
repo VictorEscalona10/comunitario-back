@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_URL } from '../api/api';
 import { useEffect, useState } from 'react';
 import IngredientContainer from '../components/IngredientContainer';
 import AddIngredientModal from '../components/AddIngredientModal';
@@ -13,8 +14,9 @@ const Ingredients = () => {
   const getIngredients = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:3000/ingredients/getAll');
+      const response = await axios.get(`${API_URL}/ingredients/getAll`);
       setIngredients(response.data);
+
     } catch (error) {
       toast.error('Error al cargar los ingredientes');
       console.error(error);

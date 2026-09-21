@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../api/api';
 import AddRecipeModal from '../components/AddRecipeModal';
 import RecipeContainer from '../components/RecipeContainer';
 import toast from 'react-hot-toast';
@@ -20,8 +21,9 @@ const Recipes = () => {
   const getRecipes = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:3000/recipes');
+      const response = await axios.get(`${API_URL}/recipes`);
       setRecipes(response.data);
+
     } catch (error) {
       toast.error('Error al cargar las recetas');
       console.error(error);
