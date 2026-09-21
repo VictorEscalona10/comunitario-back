@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import IngredientContainer from '../components/IngredientContainer';
 import AddIngredientModal from '../components/AddIngredientModal';
 import toast from 'react-hot-toast';
+import { sanitizeSearchQuery } from '../utils/security';
 
 const Ingredients = () => {
   const [ingredients, setIngredients] = useState<any[]>([]);
@@ -54,7 +55,7 @@ const Ingredients = () => {
 
       {/* Search */}
       {ingredients.length > 0 && (
-        <div className="mb-5 max-w-xs relative">
+        <div className="mb-5 w-full sm:max-w-xs relative">
           <svg
             width="16" height="16" fill="none" stroke="#9CA3AF" viewBox="0 0 24 24"
             style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
@@ -64,7 +65,8 @@ const Ingredients = () => {
           <input
             type="text"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => setSearch(sanitizeSearchQuery(e.target.value, 50))}
+            maxLength={50}
             placeholder="Buscar ingrediente..."
             className="input-field"
             style={{ paddingLeft: 36 }}
@@ -104,7 +106,7 @@ const Ingredients = () => {
           <button className="btn btn-secondary" onClick={() => setSearch('')}>Limpiar búsqueda</button>
         </div>
       ) : (
-        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
           {filtered.map((ingredient) => (
             <IngredientContainer
               key={ingredient.id}

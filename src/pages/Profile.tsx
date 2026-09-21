@@ -150,21 +150,21 @@ const Profile = () => {
             Monitoreo general del flujo de ingredientes, estadísticas de inventario y consumos en tiempo real.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button 
-            className={`btn ${timeRange === 'week' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn ${timeRange === 'week' ? 'btn-primary' : 'btn-secondary'} flex-1 sm:flex-none justify-center`}
             onClick={() => setTimeRange('week')}
           >
             Esta Semana
           </button>
           <button 
-            className={`btn ${timeRange === 'month' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn ${timeRange === 'month' ? 'btn-primary' : 'btn-secondary'} flex-1 sm:flex-none justify-center`}
             onClick={() => setTimeRange('month')}
           >
             Este Mes
           </button>
           <button 
-            className="btn btn-secondary"
+            className="btn btn-secondary w-full sm:w-auto justify-center"
             onClick={fetchData}
             title="Actualizar datos"
           >
@@ -180,16 +180,16 @@ const Profile = () => {
             <span>A</span>
           </div>
           <div className="flex-1 min-w-[200px]">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-gray-900">Administrador de Almacén</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Administrador de Almacén</h2>
               <span className="profile-badge-active">● Conectado a NestJS DB</span>
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">admin@comunitario.org · Rol: Gestión & Control</p>
-            <div className="flex gap-4 mt-2 text-xs text-gray-600 flex-wrap">
-              <span> Total Ingredientes: <strong className="text-gray-800">{totalIngredientesCount}</strong></span>
-              <span> Recetas Registradas: <strong className="text-gray-800">{recipes.length}</strong></span>
-              <span> Stock Total Disponible: <strong className="text-gray-800">{totalStockActual} unidades/kg</strong></span>
-              <span> Movimientos Registrados: <strong className="text-gray-800">{movements.length}</strong></span>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">admin@comunitario.org · Rol: Gestión & Control</p>
+            <div className="flex gap-2 sm:gap-4 mt-2 text-xs text-gray-600 flex-wrap">
+              <span className="bg-gray-100 px-2 py-1 rounded-md"> Total Ingredientes: <strong className="text-gray-800">{totalIngredientesCount}</strong></span>
+              <span className="bg-gray-100 px-2 py-1 rounded-md"> Recetas Registradas: <strong className="text-gray-800">{recipes.length}</strong></span>
+              <span className="bg-gray-100 px-2 py-1 rounded-md"> Stock Total: <strong className="text-gray-800">{totalStockActual}</strong></span>
+              <span className="bg-gray-100 px-2 py-1 rounded-md"> Movimientos: <strong className="text-gray-800">{movements.length}</strong></span>
             </div>
           </div>
         </div>
@@ -221,7 +221,7 @@ const Profile = () => {
           <div className="stat-content">
             <span className="stat-label">Se Utilizaron (Salidas)</span>
             <span className="stat-value text-amber-600">-{totalUtilizado}</span>
-            <span className="stat-subtext">Unidades/Kg consumidos en recetas/ajustes</span>
+            <span className="stat-subtext">Unidades/Kg consumidos</span>
           </div>
         </div>
 
@@ -233,9 +233,9 @@ const Profile = () => {
             </svg>
           </div>
           <div className="stat-content">
-            <span className="stat-label">Tasa de Rotación / Uso</span>
+            <span className="stat-label">Tasa de Rotación</span>
             <span className="stat-value text-indigo-600">{tasaUso}%</span>
-            <span className="stat-subtext">Relación consumo / inventario</span>
+            <span className="stat-subtext">Consumo vs inventario</span>
           </div>
         </div>
 
@@ -247,12 +247,12 @@ const Profile = () => {
             </svg>
           </div>
           <div className="stat-content">
-            <span className="stat-label">Alertas de Stock Bajo</span>
+            <span className="stat-label">Alertas Stock Bajo</span>
             <span className={`stat-value ${lowStockCount > 0 ? 'text-red-600' : 'text-blue-600'}`}>
               {lowStockCount}
             </span>
             <span className="stat-subtext">
-              {lowStockCount > 0 ? 'Requieren reabastecimiento' : 'Stock en niveles óptimos'}
+              {lowStockCount > 0 ? 'Reabastecer pronto' : 'Niveles óptimos'}
             </span>
           </div>
         </div>
@@ -285,32 +285,34 @@ const Profile = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent" />
               </div>
             ) : (
-              <div className="bar-chart-container">
-                {chartData.map((d, i) => {
-                  const heightIn = Math.round((d.ingresados / maxChartVal) * 100);
-                  const heightOut = Math.round((d.utilizados / maxChartVal) * 100);
-                  return (
-                    <div key={i} className="chart-column">
-                      <div className="bars-group">
-                        <div
-                          className="chart-bar bar-in"
-                          style={{ height: `${Math.max(8, heightIn)}%` }}
-                          title={`Ingresados (${d.day}): ${d.ingresados}`}
-                        >
-                          <span className="bar-tooltip">+{d.ingresados}</span>
+              <div className="bar-chart-scroll-wrapper">
+                <div className="bar-chart-container">
+                  {chartData.map((d, i) => {
+                    const heightIn = Math.round((d.ingresados / maxChartVal) * 100);
+                    const heightOut = Math.round((d.utilizados / maxChartVal) * 100);
+                    return (
+                      <div key={i} className="chart-column">
+                        <div className="bars-group">
+                          <div
+                            className="chart-bar bar-in"
+                            style={{ height: `${Math.max(8, heightIn)}%` }}
+                            title={`Ingresados (${d.day}): ${d.ingresados}`}
+                          >
+                            <span className="bar-tooltip">+{d.ingresados}</span>
+                          </div>
+                          <div
+                            className="chart-bar bar-out"
+                            style={{ height: `${Math.max(8, heightOut)}%` }}
+                            title={`Utilizados (${d.day}): ${d.utilizados}`}
+                          >
+                            <span className="bar-tooltip">-{d.utilizados}</span>
+                          </div>
                         </div>
-                        <div
-                          className="chart-bar bar-out"
-                          style={{ height: `${Math.max(8, heightOut)}%` }}
-                          title={`Utilizados (${d.day}): ${d.utilizados}`}
-                        >
-                          <span className="bar-tooltip">-{d.utilizados}</span>
-                        </div>
+                        <span className="chart-x-label">{d.day}</span>
                       </div>
-                      <span className="chart-x-label">{d.day}</span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -332,8 +334,8 @@ const Profile = () => {
               topIngredientes.map((ing) => (
                 <div key={ing.id} className="top-ing-item">
                   <div className="flex justify-between text-xs font-semibold text-gray-700 mb-1">
-                    <span>{ing.name}</span>
-                    <span className="text-gray-500">
+                    <span className="truncate pr-2">{ing.name}</span>
+                    <span className="text-gray-500 shrink-0">
                       -{ing.utilizado} {ing.unit_of_measure}
                     </span>
                   </div>
@@ -344,7 +346,7 @@ const Profile = () => {
                     />
                   </div>
                   <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                    <span>Stock actual: {ing.currentStock} {ing.unit_of_measure}</span>
+                    <span>Stock: {ing.currentStock} {ing.unit_of_measure}</span>
                     <span>{ing.pctUso}% rotación</span>
                   </div>
                 </div>
@@ -357,7 +359,7 @@ const Profile = () => {
       {/* Tabs / Movement History Section */}
       <div className="chart-card">
         <div className="chart-card-header">
-          <div className="flex gap-4">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
             <button
               className={`tab-btn ${activeTab === 'overview' ? 'tab-btn-active' : ''}`}
               onClick={() => setActiveTab('overview')}

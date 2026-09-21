@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { API_URL } from "../api/api";
 import toast from "react-hot-toast";
+import { validateName, validateUnitOfMeasure, validateQuantity, sanitizeText } from "../utils/security";
 
 interface AddIngredientModalProps {
   isOpen: boolean;
@@ -15,32 +16,67 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
   const [currentStock, setCurrentStock] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Sanitizar en tiempo real eliminando caracteres peligrosos
+    const sanitized = sanitizeText(e.target.value, 60);
+    setIngredientName(sanitized);
+  };
+
   const handleIntInput = (setter: (v: string) => void) => (value: string) => {
-    if (value === '' || /^\d*$/.test(value)) setter(value);
+    // Permitir solo dígitos numéricos enteros positivos
+    if (value === '' || /^\d*$/.test(value)) {
+      setter(value.slice(0, 8));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. Validar nombre del ingrediente
+    const nameValidation = validateName(ingredientName, 'nombre del ingrediente', 2, 60);
+    if (!nameValidation.isValid) {
+      toast.error(nameValidation.error || 'Nombre de ingrediente inválido');
+      return;
+    }
+
+    // 2. Validar unidad de medida (Whitelist)
+    const unitValidation = validateUnitOfMeasure(unitOfMeasure);
+    if (!unitValidation.isValid) {
+      toast.error(unitValidation.error || 'Selecciona una unidad de medida válida');
+      return;
+    }
+
+    // 3. Validar stock mínimo
+    let minStockNum = 0;
+    if (minStock.trim() !== '') {
+      const minStockVal = validateQuantity(minStock, 0, 1000000, 'El stock mínimo');
+      if (!minStockVal.isValid) {
+        toast.error(minStockVal.error || 'Stock mínimo inválido');
+        return;
+      }
+      minStockNum = minStockVal.cleanNumber;
+    }
+
+    // 4. Validar stock actual
+    let currentStockNum = 0;
+    if (currentStock.trim() !== '') {
+      const currentStockVal = validateQuantity(currentStock, 0, 1000000, 'El stock actual');
+      if (!currentStockVal.isValid) {
+        toast.error(currentStockVal.error || 'Stock actual inválido');
+        return;
+      }
+      currentStockNum = currentStockVal.cleanNumber;
+    }
+
     setLoading(true);
-
-    const minStockNum = minStock === "" ? 0 : parseInt(minStock, 10);
-    const currentStockNum = currentStock === "" ? 0 : parseInt(currentStock, 10);
-
-    if (minStock !== "" && isNaN(minStockNum)) {
-      toast.error("El stock mínimo debe ser un número entero"); setLoading(false); return;
-    }
-    if (currentStock !== "" && isNaN(currentStockNum)) {
-      toast.error("El stock actual debe ser un número entero"); setLoading(false); return;
-    }
 
     try {
       await axios.post(`${API_URL}/ingredients/create`, {
-        name: ingredientName.trim(),
-        unit_of_measure: unitOfMeasure,
+        name: nameValidation.cleanValue,
+        unit_of_measure: unitValidation.cleanUnit,
         minStock: minStockNum,
         currentStock: currentStockNum,
       }, { headers: { 'Content-Type': 'application/json' } });
-
 
       toast.success("¡Ingrediente creado con éxito!");
       handleClose();
@@ -83,7 +119,8 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
                 id="ing-name"
                 type="text"
                 value={ingredientName}
-                onChange={(e) => setIngredientName(e.target.value)}
+                onChange={handleNameChange}
+                maxLength={60}
                 className="input-field"
                 placeholder="Ej: Harina"
                 required
@@ -108,7 +145,7 @@ const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, onClose
             </div>
 
             {/* Stock fields */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label htmlFor="ing-min" className="form-label">Stock mínimo</label>
                 <input

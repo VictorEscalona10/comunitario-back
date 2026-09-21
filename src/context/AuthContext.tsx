@@ -4,6 +4,8 @@ import { api } from '../api/api';
 import toast from 'react-hot-toast';
 
 
+import { validateEmail, validateName, sanitizeText } from '../utils/security';
+
 export interface User {
   id: string;
   email: string;
@@ -52,8 +54,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    const emailVal = validateEmail(email);
+    if (!emailVal.isValid) {
+      toast.error(emailVal.error || 'Correo inválido');
+      return false;
+    }
+
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', {
+        email: emailVal.cleanEmail,
+        password: String(password || ''),
+      });
       if (res.data && res.data.user) {
         setUser(res.data.user);
         toast.success(`¡Bienvenido de nuevo, ${res.data.user.name}!`);
@@ -77,12 +88,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     email: string,
     password: string
   ): Promise<boolean> => {
+    const nameVal = validateName(name, 'nombre', 2, 50);
+    if (!nameVal.isValid) {
+      toast.error(nameVal.error || 'Nombre inválido');
+      return false;
+    }
+
+    const emailVal = validateEmail(email);
+    if (!emailVal.isValid) {
+      toast.error(emailVal.error || 'Correo inválido');
+      return false;
+    }
+
+    const cleanLastName = sanitizeText(lastName || '', 50);
+
     try {
       const res = await api.post('/auth/register', {
-        name,
-        last_name: lastName,
-        email,
-        password,
+        name: nameVal.cleanValue,
+        last_name: cleanLastName,
+        email: emailVal.cleanEmail,
+        password: String(password || ''),
       });
       if (res.data && res.data.user) {
         setUser(res.data.user);

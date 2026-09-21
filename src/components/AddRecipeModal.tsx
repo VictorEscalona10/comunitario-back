@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../api/api';
 import toast from 'react-hot-toast';
-
+import { validateName, validateDescription, validateQuantity, sanitizeText, sanitizeSearchQuery } from '../utils/security';
 
 interface Ingredient {
   id: string;
@@ -39,7 +39,7 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
   const loadIngredients = async () => {
     try {
       const response = await axios.get(`${API_URL}/ingredients/getAll`);
-      setIngredients(response.data);
+      setIngredients(response.data || []);
     } catch (error) {
       toast.error('Error al cargar ingredientes');
       console.error(error);
@@ -66,9 +66,10 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
   };
 
   const handleQuantityChange = (id: string, quantity: string) => {
+    // Aceptar solo números enteros positivos hasta 6 dígitos
     if (quantity === '' || /^\d*$/.test(quantity)) {
       setSelectedIngredients(selectedIngredients.map(item =>
-        item.id === id ? { ...item, quantity } : item
+        item.id === id ? { ...item, quantity: quantity.slice(0, 6) } : item
       ));
     }
   };
@@ -76,31 +77,51 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!recipeName.trim()) { toast.error('El nombre de la receta es requerido'); return; }
-    if (selectedIngredients.length === 0) { toast.error('Debe agregar al menos un ingrediente'); return; }
+    // 1. Validar nombre de la receta
+    const nameValidation = validateName(recipeName, 'nombre de la receta', 2, 80);
+    if (!nameValidation.isValid) {
+      toast.error(nameValidation.error || 'Nombre de receta inválido');
+      return;
+    }
+
+    // 2. Validar descripción
+    const descValidation = validateDescription(description, 300);
+    if (!descValidation.isValid) {
+      toast.error(descValidation.error || 'Descripción inválida');
+      return;
+    }
+
+    // 3. Validar ingredientes seleccionados
+    if (selectedIngredients.length === 0) {
+      toast.error('Debe agregar al menos un ingrediente a la receta');
+      return;
+    }
+
+    const cleanIngredientsPayload: { ingredientId: string; quantity: number }[] = [];
 
     for (const item of selectedIngredients) {
-      if (!item.quantity || item.quantity.trim() === '') {
-        toast.error(`Ingresa una cantidad para "${item.name}"`); return;
+      const qtyValidation = validateQuantity(item.quantity, 1, 100000, `La cantidad para "${item.name}"`);
+      if (!qtyValidation.isValid) {
+        toast.error(qtyValidation.error || `Cantidad inválida para "${item.name}"`);
+        return;
       }
-      const q = parseInt(item.quantity, 10);
-      if (isNaN(q) || q <= 0) {
-        toast.error(`Cantidad inválida para "${item.name}"`); return;
-      }
+      cleanIngredientsPayload.push({
+        ingredientId: item.id,
+        quantity: qtyValidation.cleanNumber,
+      });
     }
 
     setIsLoading(true);
     try {
       await axios.post(`${API_URL}/recipes`, {
-        name: recipeName,
-        description,
-        ingredients: selectedIngredients.map(ing => ({
-          ingredientId: ing.id,
-          quantity: parseInt(ing.quantity, 10),
-        })),
+        name: nameValidation.cleanValue,
+        description: descValidation.cleanValue,
+        ingredients: cleanIngredientsPayload,
       });
       toast.success('¡Receta creada exitosamente!');
-      setRecipeName(''); setDescription(''); setSelectedIngredients([]);
+      setRecipeName('');
+      setDescription('');
+      setSelectedIngredients([]);
       onClose();
       if (onRecipeAdded) onRecipeAdded();
     } catch (error: any) {
@@ -132,7 +153,8 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
               <input
                 type="text"
                 value={recipeName}
-                onChange={(e) => setRecipeName(e.target.value)}
+                onChange={(e) => setRecipeName(sanitizeText(e.target.value, 80))}
+                maxLength={80}
                 className="input-field"
                 placeholder="Ej: Pasta Carbonara"
                 required
@@ -144,7 +166,8 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
               <label className="form-label">Descripción</label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => setDescription(sanitizeText(e.target.value, 300))}
+                maxLength={300}
                 className="input-field"
                 style={{ resize: 'none' }}
                 placeholder="Describe brevemente esta receta..."
@@ -171,10 +194,10 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {selectedIngredients.map((ingredient) => (
                     <div key={ingredient.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-                      background: '#F9FAFB', borderRadius: 10, border: '1px solid #E5E7EB',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 12px',
+                      background: '#F9FAFB', borderRadius: 10, border: '1px solid #E5E7EB', flexWrap: 'wrap',
                     }}>
-                      <span style={{ flex: 1, fontSize: '0.875rem', fontWeight: 500, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ flex: '1 1 120px', fontSize: '0.875rem', fontWeight: 500, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {ingredient.name}
                       </span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
@@ -183,17 +206,19 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
                           value={ingredient.quantity}
                           onChange={(e) => handleQuantityChange(ingredient.id, e.target.value)}
                           className="input-small"
+                          style={{ width: '56px' }}
                           placeholder="0"
                         />
-                        <span style={{ fontSize: '0.75rem', color: '#9CA3AF', width: 60, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#9CA3AF', maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {ingredient.unit_of_measure}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveIngredient(ingredient.id)}
                           className="btn-ghost-red"
+                          aria-label={`Quitar ${ingredient.name}`}
                         >
-                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
@@ -215,7 +240,8 @@ const AddRecipeModal = ({ isOpen, onClose, onRecipeAdded }: AddRecipeModalProps)
                 <input
                   type="text"
                   value={filterText}
-                  onChange={(e) => setFilterText(e.target.value)}
+                  onChange={(e) => setFilterText(sanitizeSearchQuery(e.target.value, 60))}
+                  maxLength={60}
                   className="input-field"
                   style={{ paddingLeft: 36 }}
                   placeholder="Buscar ingrediente..."

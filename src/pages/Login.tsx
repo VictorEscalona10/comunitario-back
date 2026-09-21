@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
+import toast from 'react-hot-toast';
+import { validateEmail, validatePassword } from '../utils/security';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -24,11 +26,24 @@ export const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+
+    // Validar email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      toast.error(emailValidation.error || 'Correo electrónico inválido');
+      return;
+    }
+
+    // Validar contraseña
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      toast.error(passwordValidation.error || 'Contraseña inválida');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const success = await login(email, password);
+      const success = await login(emailValidation.cleanEmail, password);
       if (success) {
         navigate(from, { replace: true });
       }

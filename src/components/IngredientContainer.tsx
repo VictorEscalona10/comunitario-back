@@ -5,6 +5,8 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import DeleteIcon from "@mui/icons-material/Delete";
 
+import { validateQuantity } from "../utils/security";
+
 interface IngredientsProps {
   id: string;
   name: string;
@@ -17,25 +19,30 @@ interface IngredientsProps {
 const IngredientContainer = ({ id, name, unit_of_measure, onUpdate, stock, minStock }: IngredientsProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [confirmation, setConfirmation] = useState<{ isOpen: boolean; type: "add" | "subtract" | null }>({ isOpen: false, type: null });
+  const [confirmation, setConfirmation] = useState<{ isOpen: boolean; type: "add" | "subtract" | null; amount?: number }>({ isOpen: false, type: null });
   const [deleteConfirmation, setDeleteConfirmation] = useState(false);
 
   const isLowStock = stock <= minStock;
 
   const handleInputChange = (value: string) => {
-    if (value === "" || /^\d*$/.test(value)) setInputValue(value);
+    // Aceptar solo números enteros positivos hasta 6 dígitos
+    if (value === "" || /^\d*$/.test(value)) {
+      setInputValue(value.slice(0, 6));
+    }
   };
 
   const initiateAction = (type: "add" | "subtract") => {
-    if (!inputValue || inputValue.trim() === "") { toast.error("Ingresa una cantidad válida"); return; }
-    const amount = parseInt(inputValue, 10);
-    if (isNaN(amount) || amount <= 0) { toast.error("La cantidad debe ser un número entero mayor a 0"); return; }
-    setConfirmation({ isOpen: true, type });
+    const validation = validateQuantity(inputValue, 1, 100000, 'La cantidad');
+    if (!validation.isValid) {
+      toast.error(validation.error || "Ingresa una cantidad válida");
+      return;
+    }
+    setConfirmation({ isOpen: true, type, amount: validation.cleanNumber });
   };
 
   const handleConfirm = async () => {
-    if (!confirmation.type) return;
-    const amount = parseInt(inputValue, 10);
+    if (!confirmation.type || !confirmation.amount) return;
+    const amount = confirmation.amount;
     setIsLoading(true);
     try {
       const endpoint = confirmation.type === "add" ? "addStock" : "restaStock";
@@ -57,7 +64,9 @@ const IngredientContainer = ({ id, name, unit_of_measure, onUpdate, stock, minSt
   const handleDelete = async () => {
     setIsLoading(true);
     try {
-      await axios.delete(`${API_URL}/ingredients/delete/${name}`);
+      // URL encode para evitar inyecciones o caracteres extraños en el path
+      const safeName = encodeURIComponent(name.trim());
+      await axios.delete(`${API_URL}/ingredients/delete/${safeName}`);
       toast.success("Ingrediente eliminado");
       if (onUpdate) onUpdate();
     } catch (error) {
@@ -107,22 +116,23 @@ const IngredientContainer = ({ id, name, unit_of_measure, onUpdate, stock, minSt
         </div>
 
         {/* Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 14, width: '100%' }}>
           <input
             type="text"
             value={inputValue}
             onChange={(e) => handleInputChange(e.target.value)}
             placeholder="Cant."
             className="input-small"
-            style={{ flexShrink: 0 }}
+            style={{ flex: '1 1 50px', minWidth: '44px', maxWidth: '64px' }}
           />
           <button
             onClick={() => initiateAction("subtract")}
             style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flex: '1 1 32px', minWidth: '32px', minHeight: '34px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '6px 0', borderRadius: 8, border: '1px solid #E5E7EB', background: 'transparent',
-              color: '#9CA3AF', fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
-              transition: 'all 0.15s',
+              color: '#9CA3AF', fontSize: '1.1rem', fontWeight: 700, cursor: 'pointer',
+              transition: 'all 0.15s', touchAction: 'manipulation',
             }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#DC2626'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#FECACA'; (e.currentTarget as HTMLButtonElement).style.background = '#FEF2F2'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#9CA3AF'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#E5E7EB'; (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
@@ -133,10 +143,11 @@ const IngredientContainer = ({ id, name, unit_of_measure, onUpdate, stock, minSt
           <button
             onClick={() => initiateAction("add")}
             style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flex: '1 1 32px', minWidth: '32px', minHeight: '34px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '6px 0', borderRadius: 8, border: '1px solid #C7D2FE', background: 'transparent',
-              color: '#4F46E5', fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
-              transition: 'all 0.15s',
+              color: '#4F46E5', fontSize: '1.1rem', fontWeight: 700, cursor: 'pointer',
+              transition: 'all 0.15s', touchAction: 'manipulation',
             }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#4F46E5'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#4F46E5'; }}

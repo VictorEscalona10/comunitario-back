@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { API_URL } from '../api/api';
 import { toast } from 'react-hot-toast';
+import { validateQuantity } from '../utils/security';
 
 interface IngredientItem {
   ingredient?: {
@@ -30,18 +31,25 @@ const RecipeContainer: React.FC<RecipeCardProps> = ({ recipe }) => {
   const [loading, setLoading] = useState(false);
 
   const handleQuantityChange = (value: string) => {
-    if (value === '' || /^\d*$/.test(value)) setQuantity(value);
+    // Permitir solo números enteros positivos hasta 4 dígitos (hasta 9999 raciones)
+    if (value === '' || /^\d*$/.test(value)) {
+      setQuantity(value.slice(0, 4));
+    }
   };
 
   const handlePrepare = async () => {
-    const qty = parseInt(quantity, 10);
-    if (!quantity.trim() || isNaN(qty)) { toast.error('Debe ingresar una cantidad'); return; }
-    if (qty < 1) { toast.error('La cantidad debe ser mayor a 0'); return; }
+    const qtyValidation = validateQuantity(quantity, 1, 5000, 'La cantidad de raciones');
+    if (!qtyValidation.isValid) {
+      toast.error(qtyValidation.error || 'Ingresa una cantidad válida');
+      return;
+    }
+
+    const qty = qtyValidation.cleanNumber;
 
     try {
       setLoading(true);
       const { data } = await axios.post(`${API_URL}/recipes/${recipe.id}/prepare`, { quantity: qty });
-      toast.success(data.message);
+      toast.success(data.message || 'Receta preparada con éxito');
       setQuantity('');
     } catch (error: any) {
       const backendError = error?.response?.data;

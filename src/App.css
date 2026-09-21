@@ -415,14 +415,125 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
 
 /* ============================================================
-   RESPONSIVE
+   RESPONSIVE BASE & BREAKPOINTS
    ============================================================ */
+@media (max-width: 1024px) {
+  .page-wrapper {
+    padding: 20px 24px;
+  }
+}
+
 @media (max-width: 768px) {
-  .main-content { margin-left: 0; }
-  .mobile-topbar { display: flex; }
-  .sidebar-overlay { display: block; }
-  .page-wrapper { padding: 16px; }
-  .content-card { padding: 16px; }
+  .main-content {
+    margin-left: 0;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .mobile-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .page-wrapper {
+    padding: 16px 14px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .page-header {
+    margin-bottom: 18px;
+    gap: 12px;
+  }
+
+  .page-title {
+    font-size: 1.375rem;
+  }
+
+  .content-card {
+    padding: 18px 14px;
+    border-radius: 10px;
+  }
+
+  /* Modal responsiveness */
+  .modal-backdrop {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  @media (min-width: 640px) {
+    .modal-backdrop {
+      align-items: center;
+      padding: 16px;
+    }
+  }
+
+  .modal-panel {
+    max-height: calc(100dvh - 24px);
+    border-radius: 14px;
+  }
+
+  .modal-header {
+    padding: 16px 18px;
+  }
+
+  .modal-body {
+    padding: 16px 18px;
+  }
+
+  .modal-footer {
+    padding: 14px 18px;
+    gap: 8px;
+    flex-direction: column-reverse;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header > button,
+  .page-header > .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn {
+    padding: 0.55rem 0.9rem;
+    font-size: 0.8125rem;
+  }
+
+  .empty-state {
+    padding: 40px 16px;
+  }
+
+  .empty-state-icon {
+    width: 48px;
+    height: 48px;
+  }
 }
 
 /* ============================================================
@@ -753,4 +864,97 @@ body {
   background-color: #FEF2F2;
   color: #B91C1C;
   border: 1px solid #FCA5A5;
+}
+
+/* ============================================================
+   RESPONSIVE ANALYTICS & TABLES
+   ============================================================ */
+@media (max-width: 768px) {
+  .chart-card {
+    padding: 16px 14px;
+    border-radius: 10px;
+  }
+
+  .chart-title {
+    font-size: 0.95rem;
+  }
+
+  .chart-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .chart-card-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .chart-legend {
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .bar-chart-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+
+  .bar-chart-container {
+    min-width: 320px;
+    height: 190px;
+  }
+
+  .chart-bar {
+    width: 14px;
+  }
+
+  .stat-card {
+    padding: 16px 14px;
+  }
+
+  .stat-value {
+    font-size: 1.375rem;
+  }
+
+  .tab-btn {
+    font-size: 0.8125rem;
+    padding: 6px 10px;
+  }
+
+  .custom-table th,
+  .custom-table td {
+    padding: 10px 12px;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-user-card {
+    padding: 16px 12px;
+  }
+
+  .profile-avatar {
+    width: 46px;
+    height: 46px;
+    font-size: 1.25rem;
+  }
+
+  .stat-icon-wrapper {
+    width: 38px;
+    height: 38px;
+  }
+
+  .stat-icon-wrapper svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    text-align: center;
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
 }
